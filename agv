@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import re
+import math
+import glob
+import subprocess
+import argparse
+from string import Template
+from collections import defaultdict
+
+# The AGV_EDITOR environmental variable
+# default: $EDITOR, then 'vi'
+# suggested:
+#   AGV_EDITOR='vv $file:$line:$col'
+#   AGV_EDITOR='vim +$line $file'
+# escape: '$$' (but shell may recognize it!)
+# unknown -> ''
+editor = os.environ.get('AGV_EDITOR', os.environ.get('EDITOR', 'vi'))
+if editor in ('vi', 'vim'):
+  editor += ' +$line'
+if '$file' not in editor:
+  editor += ' $file'
+editor = Template(editor)
+
+logfile_base = os.path.expanduser('~/.agg.log')
+matcher = re.compile(r'''
+                     \s*\d+\s*   # column number
+                     \x1b[^m]+m
+                     (?P<file>[^\x1b]+)
+                     [^:]+:
+                     \x1b[^m]+m
+                     (?P<line>\d+)
+                     [^:]+:
+                     (?P<col>\d+)
+                     ''', re.VERBOSE)
+def get_logfile(index):
+  '''
+  index == 0: try to choose one depending on ttyname
+  index >= 0: file index after sorting
+  index < 0:  return all files
+  '''
+  files = None
+
+  if index <= 0:
+    ttyname = os.ttyname(sys.stdout.fileno()).replace('/', '_')
+    try_file = logfile_base + '.' + ttyname
+    if os.path.exists(try_file):
+      if index == 0:
+        return try_file
+      else:
+        files = [try_file]
+
+  if files:
+    files += [x for x in glob.glob(logfile_base + '*') if x != files[0]]
+  else:
+    files = glob.glob(logfile_base + '*')
+  files.sort(reverse=True, key=lambda f: os.stat(f).st_mtime)
+  if index >= 0:
+    return files[index]
+  else:
+    return files
+
+def edit(line):
+  m = matcher.match(line)
+  print('File: %s, Line %s, Col %s.' % m.groups())
+  d = defaultdict(str)
+  d.update(m.groupdict())
+  cmd = editor.substitute(d)
+  os.system(cmd)
+
+def edit_entry(n, logfile):
+  try:
+    with open(logfile, encoding='utf-8', errors='surrogateescape') as f:
+      os.chdir(f.readline()[:-1])
+      f.readline() # args
+      for i, l in enumerate(f):
+        if i == n-1:
+          edit(l[:-1])
+          break
+      else:
+        sys.exit('out of index.')
+  except IOError as e:
+    print('Error opening logfile %s: %s' % (logfile, e), file=sys.stderr)
+    sys.exit(2)
+
+def cat(logfile):
+  if sys.stdout.isatty():
+    p = subprocess.Popen([os.environ.get('PAGER', 'less')],
+                         stdin=subprocess.PIPE,
+                         universal_newlines=True)
+    output = p.stdin
+  else:
+    p = None
+    output = sys.stdout
+
+  try:
+    with open(logfile) as f:
+      f.readline() # directory
+      f.readline() # args
+      for l in f:
+        output.write(l)
+  except IOError: # SIGPIPE
+    pass
+  finally:
+    if p:
+      try:
+        output.close()
+      except IOError: # still SIGPIPE
+        pass
+      p.wait()
+
+def list_logfiles(logfiles):
+  args = []
+  dirs = []
+  for log in logfiles:
+    with open(log) as f:
+      dirs.append(f.readline()[:-1])
+      args.append(f.readline()[:-1])
+
+  fmt = '%%%dd: %%-%ds (dir: %%s)' % (
+    math.ceil(math.log10(len(logfiles))),
+    max(len(x) for x in args),
+  )
+
+  for i in range(len(args)):
+    print(fmt % (i, args[i], dirs[i]))
+
+def main():
+  parser = argparse.ArgumentParser(description='view and go to agg results')
+  parser.add_argument('index', metavar='N', type=int, nargs='?',
+                      help='index of result entry to go to')
+  parser.add_argument('-l', action='store_true', default=False,
+                      help='list results (same without args)')
+  parser.add_argument('-L', '--list', action='store_true', default=False,
+                      help='list all log files')
+  parser.add_argument('-f', '--file', type=int, default=0,
+                      help='explicitly select a log file')
+
+  args = parser.parse_args()
+
+  if args.list:
+    logfiles = get_logfile(-1)
+    if not logfiles:
+      sys.exit('no agg log files')
+    list_logfiles(logfiles)
+  else:
+    try:
+      logfile = get_logfile(args.file)
+    except IndexError:
+      sys.exit('no agg log files')
+    if args.index:
+      edit_entry(args.index, logfile)
+    else:
+      cat(logfile)
+
+if __name__ == '__main__':
+  try:
+    import setproctitle
+    setproctitle.setproctitle('agv')
+  except ImportError:
+    pass
+
+  main()
