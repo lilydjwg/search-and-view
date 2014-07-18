@@ -73,4 +73,4 @@ Then you can just select the line and do::
 .. _setproctitle: http://code.google.com/p/py-setproctitle/
 .. _easygui: http://easygui.sourceforge.net/
 .. _my blog article:
-.. _我的博客文章: http://lilydjwg.is-programmer.com/
+.. _我的博客文章: http://lilydjwg.is-programmer.com/2014/7/18/search-and-view-quickly.53141.html
