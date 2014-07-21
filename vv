@@ -8,7 +8,7 @@ from subprocess import check_call, check_output, TimeoutExpired
 
 filelines = (
   re.compile(
-    r'''[^/]*
+    r'''([File\s]*")?
     (?P<file>[^"]+)
     ",\sline\s
     (?P<line>\d+)''', re.VERBOSE), # Python Traceback, e.g. File "/path/to/file.py", line 23
