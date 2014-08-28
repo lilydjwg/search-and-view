@@ -6,7 +6,7 @@ tmpfile="$HOME/.agg.tmp"
 
 pwd -L > $tmpfile
 echo "$@" >> $tmpfile
-ag --column --nogroup --color "$@" | cat -n | tee -ai $tmpfile | ${PAGER:-less}
+ag -s --column --nogroup --color "$@" | cat -n | tee -ai $tmpfile | ${PAGER:-less}
 if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
   mv $tmpfile $logfile
 else
