@@ -32,8 +32,8 @@ matcher = re.compile(r'''
                      [^:]+:
                      \x1b[^m]+m
                      (?P<line>\d+)
-                     [^:]+:
-                     (?P<col>\d+)
+                     (?:[^:]+:
+                     (?P<col>\d+))?
                      ''', re.VERBOSE)
 def get_logfile(index):
   '''
@@ -64,9 +64,12 @@ def get_logfile(index):
 
 def edit(line):
   m = matcher.match(line)
-  print('File: %s, Line %s, Col %s.' % m.groups())
+  info = m.groupdict()
+  if not info['col']:
+      info['col'] = '0'
+  print('File: %(file)s, Line %(line)s, Col %(col)s.' % info)
   d = defaultdict(str)
-  d.update(m.groupdict())
+  d.update(info)
   cmd = editor.substitute(d)
   os.system(cmd)
 
