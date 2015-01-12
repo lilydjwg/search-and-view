@@ -1,14 +1,15 @@
 #!/bin/bash
 
 ttyname=$(tty | tr '/' '_')
-logfile="$HOME/.agg.log.$ttyname"
-tmpfile="$HOME/.agg.tmp"
+base=/run/user/$UID
+logfile="$base/.agg.log.$ttyname"
+tmpfile="$base/.agg.tmp"
 
 pwd -L > $tmpfile
 echo "$@" >> $tmpfile
 ag -s --column --nogroup --color "$@" | cat -n | tee -ai $tmpfile | ${PAGER:-less}
 if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
-  mv $tmpfile $logfile
+  mv $tmpfile "$logfile"
 else
-  exit ${PIPESTATUS[0]}
+  exit "${PIPESTATUS[0]}"
 fi

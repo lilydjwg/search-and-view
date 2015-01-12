@@ -24,7 +24,7 @@ if '$file' not in editor:
   editor += ' $file'
 editor = Template(editor)
 
-logfile_base = os.path.expanduser('~/.agg.log')
+logfile_base = '/run/user/%d/.agg.log' % os.getuid()
 matcher = re.compile(r'''
                      \s*\d+\s*   # column number
                      \x1b[^m]+m
