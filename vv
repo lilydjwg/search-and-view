@@ -29,7 +29,8 @@ def parseLineno(f):
     m = r.match(f)
     if m:
       d = m.groupdict()
-      file = os.path.abspath(d['file'])
+      if '://' not in file:
+        file = os.path.abspath(d['file'])
       line = d.get('line', None)
       col = d.get('col', None)
       break
@@ -42,7 +43,7 @@ def parseLineno(f):
   elif line is not None:
     cmd = '+%s' % line
   else:
-    return (os.path.abspath(file),)
+    return (file,)
 
   return cmd, file
 
