@@ -29,7 +29,7 @@ def parseLineno(f):
     m = r.match(f)
     if m:
       d = m.groupdict()
-      if '://' not in file:
+      if '://' not in d['file']:
         file = os.path.abspath(d['file'])
       line = d.get('line', None)
       col = d.get('col', None)
