@@ -45,7 +45,14 @@ def get_logfile(index):
   files = None
 
   if index <= 0:
-    ttyname = os.ttyname(sys.stdout.fileno()).replace('/', '_')
+    try:
+      ttyname = os.ttyname(sys.stdout.fileno()).replace('/', '_')
+    except OSError:
+      try:
+        ttyname = os.ttyname(sys.stderr.fileno()).replace('/', '_')
+      except OSError:
+        ttyname = os.ttyname(sys.stdin.fileno()).replace('/', '_')
+
     try_file = logfile_base + '.' + ttyname
     if os.path.exists(try_file):
       if index == 0:
