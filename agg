@@ -6,11 +6,11 @@ base=${XDG_RUNTIME_DIR:-/tmp/$UID}
 logfile="$base/.agg.log.$ttyname"
 tmpfile="$base/.agg.tmp"
 
-pwd -L > $tmpfile
-echo "$@" >> $tmpfile
-ag -s --column --nogroup --color "$@" | cat -n | tee -ai $tmpfile | ${PAGER:-less}
+pwd -L > "$tmpfile"
+echo "$@" >> "$tmpfile"
+ag -s --column --nogroup --color "$@" | cat -n | tee -ai "$tmpfile" | ${PAGER:-less}
 if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
-  mv $tmpfile "$logfile"
+  mv "$tmpfile" "$logfile"
 else
   exit "${PIPESTATUS[0]}"
 fi
