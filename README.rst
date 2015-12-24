@@ -15,8 +15,10 @@ Dependencies
 ------------
 
 * ``agg``: Bash, `ag`_, and several other common command-line tools.
-* ``agv``: Python 3, `setproctitle`_ library (optional).
+* ``agv``: Python 3, `setproctitle`_ library for changing the process name (optional).
 * ``vv``: Python 3, `easygui`_ library, Vim or gVim with ``+clientserver`` feature.
+
+Arch Linux users can install ``search-and-view-git`` from AUR (thanks to @acgtyrant).
 
 Configuration
 -------------
@@ -43,8 +45,8 @@ Usage
 ^^^^^^^^^^^^^^^^^^^
 Just use ``agg`` as ``ag`` to search text (Searching in filenames ``-g`` won't work).
 
-Use ``agv N`` to open the result numbered ``N``. You can use ``agv`` to view
-the list again. The list is per terminal (tty).
+Use ``agv N`` to open the result numbered ``N``. You can use ``agv`` without arguments 
+to view the list again. The list is per terminal (tty).
 
 ``vv``
 ^^^^^^
