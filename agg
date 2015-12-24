@@ -1,7 +1,8 @@
 #!/bin/bash
 
 ttyname=$(tty | tr '/' '_')
-base=/run/user/$UID
+base=${XDG_RUNTIME_DIR:-/tmp/$UID}
+[[ ! -d $base ]] && mkdir -p "$base"
 logfile="$base/.agg.log.$ttyname"
 tmpfile="$base/.agg.tmp"
 
