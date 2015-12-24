@@ -69,6 +69,11 @@ Then you can just select the line and do::
 
   vv XS
 
+License
+-------
+
+GPLv3+.
+
 .. _ag: https://github.com/ggreer/the_silver_searcher
 .. _setproctitle: http://code.google.com/p/py-setproctitle/
 .. _easygui: http://easygui.sourceforge.net/
