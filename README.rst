@@ -16,7 +16,7 @@ Dependencies
 
 * ``agg``: Bash, `ag`_, and several other common command-line tools.
 * ``agv``: Python 3, `setproctitle`_ library for changing the process name (optional).
-* ``vv``: Python 3, `easygui`_ library, Vim or gVim with ``+clientserver`` feature.
+* ``vv``: Python 3, the `zenity`_ utility, Vim or gVim with ``+clientserver`` feature.
 
 Arch Linux users can install ``search-and-view-git`` from AUR (thanks to @acgtyrant).
 
@@ -78,6 +78,6 @@ GPLv3+.
 
 .. _ag: https://github.com/ggreer/the_silver_searcher
 .. _setproctitle: http://code.google.com/p/py-setproctitle/
-.. _easygui: http://easygui.sourceforge.net/
+.. _zenity: https://help.gnome.org/users/zenity/stable/
 .. _my blog article:
 .. _我的博客文章: http://lilydjwg.is-programmer.com/2014/7/18/search-and-view-quickly.53141.html

@@ -2,9 +2,11 @@
 
 import re
 import os
-import sys, easygui
-# TimeoutExpired is added in Python 3, oh yeah~
-from subprocess import check_call, check_output, TimeoutExpired
+import sys
+from subprocess import (
+  check_call, check_output, DEVNULL,
+  TimeoutExpired, CalledProcessError,
+)
 
 filelines = (
   re.compile(
@@ -47,6 +49,22 @@ def parseLineno(f):
 
   return cmd, file
 
+def choicebox(msg, title, headers, choices):
+  cmd = ['zenity', '--list', '--title', title, '--text', msg]
+  for h in headers:
+    cmd += ['--column', h]
+  for c in choices:
+    cmd += c
+  try:
+    out = check_output(
+      cmd, stderr = DEVNULL,
+      # zenity has an annoying warning
+      # Gtk-Message: GtkDialog mapped without a transient parent. This is discouraged.
+    ).split(b'\n')[0].decode()
+    return out
+  except CalledProcessError:
+    return None
+
 def main(files):
   if len(files) == 1:
     try:
@@ -60,8 +78,7 @@ def main(files):
           if x]
 
   if len(vims) > 1:
-    # '\t' won't display correctly
-    vims_ = []
+    vims_info = []
     for x in vims:
       try:
         out = check_output(
@@ -70,21 +87,22 @@ def main(files):
           timeout=TIMEOUT)
       except TimeoutExpired:
         continue
-      vims_.append(x + ' '*(10-len(x)) + out)
-    vims = vims_
-    if len(vims) == 1:
-      vim = vims[0].split(' ', 1)[0]
+      vims_info.append((x, out.strip()))
+
+    if len(vims_info) == 1:
+      vim = vims_info[0][0]
     else:
-      try:
-        vim = easygui.choicebox(
-          msg='Multiple Vim instances found. Please choose one:',
-          title='Choose a Vim instance', choices=vims).split(' ', 1)[0]
-      except AttributeError:
+      vim = choicebox(
+        msg='Multiple Vim instances found. Please choose one:',
+        title='Choose a Vim instance', headers=['Name', 'Current File'],
+        choices=vims_info)
+      if vim is None:
         print('Cancelled.')
         sys.exit(1)
 
   elif len(vims) == 1 and vims[0]:
     vim = vims[0]
+
   else:
     # fallback to gvim
     cmd = ['gvim']
