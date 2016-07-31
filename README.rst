@@ -80,4 +80,4 @@ GPLv3+.
 .. _setproctitle: http://code.google.com/p/py-setproctitle/
 .. _zenity: https://help.gnome.org/users/zenity/stable/
 .. _my blog article:
-.. _我的博客文章: http://lilydjwg.is-programmer.com/2014/7/18/search-and-view-quickly.53141.html
+.. _我的博客文章: http://blog.lilydjwg.me/2014/7/18/search-and-view-quickly.53141.html
