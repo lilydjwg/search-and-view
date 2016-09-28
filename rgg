@@ -1,0 +1,16 @@
+#!/bin/bash
+
+ttyname=$(tty | tr '/' '_')
+base=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}/$UID}
+[[ ! -d $base ]] && mkdir -p "$base"
+logfile="$base/.agg.log.$ttyname"
+tmpfile="$base/.agg.tmp"
+
+pwd -L > "$tmpfile"
+echo "$@" >> "$tmpfile"
+rg --vimgrep --color always "$@" | tr -d '\017' | cat -n | tee -ai "$tmpfile" | ${PAGER:-less -FRXM}
+if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+  mv "$tmpfile" "$logfile"
+else
+  exit "${PIPESTATUS[0]}"
+fi

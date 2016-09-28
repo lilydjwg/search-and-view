@@ -30,13 +30,16 @@ else:
   logfile_base = '/%s/%d/.agg.log' % (
     os.environ.get('TMP', '/tmp'), os.getuid())
 matcher = re.compile(r'''
-                     \s*\d+\s*   # column number
-                     \x1b[^m]+m
+                     \s*\d+\s*          # column number
+                     (?:\x1b[^mK]+[mK])*
                      (?P<file>[^\x1b]+)
+                     (?:\x1b[^mK]+[mK])*
                      [^:]+:
-                     \x1b[^m]+m
+                     (?:\x1b[^mK]+[mK])*
                      (?P<line>\d+)
-                     (?:[^:]+:
+                     (?:\x1b[^mK]+[mK])*
+                     (?:[^:]*:
+                     (?:\x1b[^mK]+[mK])*
                      (?P<col>\d+))?
                      ''', re.VERBOSE)
 
