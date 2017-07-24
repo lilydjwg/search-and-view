@@ -7,7 +7,7 @@ For a Chinese introduction, see `my blog article`_.
 Overview
 --------
 
-* ``agg``/``agv``: `ag`_ wrappers to make it easy to open files as matching places
+* ``agg``/``rgg``/``agv``: `ag`_ / `ripgrep`_ wrappers to make it easy to open files as matching places
 * ``vv``: A gVim wrapper to open files in existing gVim instances and then move
   the cursor to specified location
 
@@ -15,6 +15,7 @@ Dependencies
 ------------
 
 * ``agg``: Bash, `ag`_, and several other common command-line tools.
+* ``rgg``: Bash, `ripgrep`_, and several other common command-line tools.
 * ``agv``: Python 3, `setproctitle`_ library for changing the process name (optional).
 * ``vv``: Python 3, the `zenity`_ utility, Vim or gVim with ``+clientserver`` feature.
 
@@ -41,9 +42,10 @@ For example::
 Usage
 -----
 
-``agg`` and ``agv``
+``agg`` / ``rgg`` and ``agv``
 ^^^^^^^^^^^^^^^^^^^
 Just use ``agg`` as ``ag`` to search text (Searching in filenames ``-g`` won't work).
+Use ``rgg`` if you want to use the `ripgrep`_ tool.
 
 Use ``agv N`` to open the result numbered ``N``. You can use ``agv`` without arguments 
 to view the list again. The list is per terminal (tty).
@@ -77,6 +79,7 @@ License
 GPLv3+.
 
 .. _ag: https://github.com/ggreer/the_silver_searcher
+.. _ripgrep: https://github.com/BurntSushi/ripgrep
 .. _setproctitle: http://code.google.com/p/py-setproctitle/
 .. _zenity: https://help.gnome.org/users/zenity/stable/
 .. _my blog article:
