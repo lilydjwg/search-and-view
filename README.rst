@@ -73,6 +73,9 @@ Then you can just select the line and do::
 
   vv XS
 
+You can pass the ``--wait`` flag to wait for Vim to finish editing the file
+(useful for programs that waits for editing to finish).
+
 License
 -------
 

@@ -65,7 +65,7 @@ def choicebox(msg, title, headers, choices):
   except CalledProcessError:
     return None
 
-def main(files):
+def main(files, wait_for_vim):
   if len(files) == 1:
     try:
       files = parseLineno(files[0])
@@ -110,9 +110,24 @@ def main(files):
     check_call(cmd)
     sys.exit()
 
-  cmd = ['vim', '--servername', vim, '--remote-tab-silent']
+  cmd = ['vim', '--servername', vim]
+  if wait_for_vim:
+    cmd.append('--remote-tab-wait-silent')
+  else:
+    cmd.append('--remote-tab-silent')
   cmd.extend(files)
-  check_call(cmd, timeout=TIMEOUT)
+  if wait_for_vim:
+    check_call(cmd)
+  else:
+    check_call(cmd, timeout=TIMEOUT)
 
 if __name__ == '__main__':
-  main(sys.argv[1:])
+  import argparse
+  parser = argparse.ArgumentParser(description='open with existing Vim')
+  parser.add_argument('files', metavar='FILE', nargs='*',
+                     help='files to open')
+  parser.add_argument('--wait', action='store_true', default=False,
+                     help='wait for Vim to finish editing the file')
+  args = parser.parse_args()
+
+  main(args.files, args.wait)
