@@ -28,7 +28,7 @@ if 'XDG_RUNTIME_DIR' in os.environ:
   logfile_base = '%s/.agg.log' % os.environ['XDG_RUNTIME_DIR']
 else:
   logfile_base = '/%s/%d/.agg.log' % (
-    os.environ.get('TMP', '/tmp'), os.getuid())
+    os.environ.get('TMPDIR', '/tmp'), os.getuid())
 matcher = re.compile(r'''
                      \s*\d+\s*          # column number
                      (?:\x1b[^mK]+[mK])*
