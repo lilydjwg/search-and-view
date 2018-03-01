@@ -4,7 +4,7 @@ ttyname=$(tty | tr '/' '_')
 base=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}/$UID}
 [[ ! -d $base ]] && mkdir -p "$base"
 logfile="$base/.agg.log.$ttyname"
-tmpfile="$base/.agg.tmp"
+tmpfile="$base/.agg.tmp.$$"
 
 pwd -L > "$tmpfile"
 echo "$@" >> "$tmpfile"
