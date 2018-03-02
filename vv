@@ -2,11 +2,7 @@
 
 import re
 import os
-import sys
-from subprocess import (
-  check_call, check_output, DEVNULL,
-  TimeoutExpired, CalledProcessError,
-)
+from subprocess import check_call, check_output
 
 filelines = (
   re.compile(
@@ -49,56 +45,22 @@ def parseLineno(f):
 
   return cmd, file
 
-def choicebox(msg, title, headers, choices):
-  cmd = ['zenity', '--list', '--title', title, '--text', msg]
-  for h in headers:
-    cmd += ['--column', h]
-  for c in choices:
-    cmd += c
-  try:
-    out = check_output(
-      cmd, stderr = DEVNULL,
-      # zenity has an annoying warning
-      # Gtk-Message: GtkDialog mapped without a transient parent. This is discouraged.
-    ).split(b'\n')[0].decode()
-    return out
-  except CalledProcessError:
-    return None
-
-def main(files, wait_for_vim):
+def main(files, wait_for_vim, vim_name):
   if len(files) == 1:
     try:
       files = parseLineno(files[0])
     except ValueError:
       pass
 
-  vims = [x for x in
-          check_output(['vim', '--serverlist'],
-                       universal_newlines=True).split('\n')
+  vims = [x.lower() for x in
+            check_output(['vim', '--serverlist']).splitlines()
           if x]
 
   if len(vims) > 1:
-    vims_info = []
-    for x in vims:
-      try:
-        out = check_output(
-          ['vim', '--servername', x, '--remote-expr', 'expand("%")'],
-          universal_newlines=True,
-          timeout=TIMEOUT)
-      except TimeoutExpired:
-        continue
-      vims_info.append((x, out.strip()))
-
-    if len(vims_info) == 1:
-      vim = vims_info[0][0]
+    if vim_name in vims:
+      vim = vim_name
     else:
-      vim = choicebox(
-        msg='Multiple Vim instances found. Please choose one:',
-        title='Choose a Vim instance', headers=['Name', 'Current File'],
-        choices=vims_info)
-      if vim is None:
-        print('Cancelled.')
-        sys.exit(1)
+      vim = vims[0]
 
   elif len(vims) == 1 and vims[0]:
     vim = vims[0]
@@ -106,9 +68,11 @@ def main(files, wait_for_vim):
   else:
     # fallback to gvim
     cmd = ['gvim']
+    if wait_for_vim:
+      cmd.append('-f')
     cmd.extend(files)
     check_call(cmd)
-    sys.exit()
+    return
 
   cmd = ['vim', '--servername', vim]
   if wait_for_vim:
@@ -128,6 +92,8 @@ if __name__ == '__main__':
                      help='files to open')
   parser.add_argument('--wait', action='store_true', default=False,
                      help='wait for Vim to finish editing the file')
+  parser.add_argument('--vim', type=str, default='GVIM',
+                     help='which Vim server to use')
   args = parser.parse_args()
 
-  main(args.files, args.wait)
+  main(args.files, args.wait, args.vim)
