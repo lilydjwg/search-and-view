@@ -22,7 +22,7 @@ filelines = (
 
 TIMEOUT = 1
 
-def parseLineno(f):
+def parse_lineno(f):
   for r in filelines:
     m = r.match(f)
     if m:
@@ -48,7 +48,7 @@ def parseLineno(f):
 def main(files, wait_for_vim, vim_name):
   if len(files) == 1:
     try:
-      files = parseLineno(files[0])
+      files = parse_lineno(files[0])
     except ValueError:
       pass
 
