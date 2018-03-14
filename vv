@@ -53,8 +53,9 @@ def main(files, wait_for_vim, vim_name):
       pass
 
   vims = [x.lower() for x in
-            check_output(['vim', '--serverlist']).splitlines()
+            check_output(['vim', '--serverlist']).decode().splitlines()
           if x]
+  vim_name = vim_name.lower()
 
   if len(vims) > 1:
     if vim_name in vims:
