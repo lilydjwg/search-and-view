@@ -53,10 +53,10 @@ def get_logfile(index):
 
   if index <= 0:
     try:
-      ttyname = os.ttyname(sys.stdout.fileno()).replace('/', '_')
+      ttyname = os.ttyname(sys.stderr.fileno()).replace('/', '_')
     except OSError:
       try:
-        ttyname = os.ttyname(sys.stderr.fileno()).replace('/', '_')
+        ttyname = os.ttyname(sys.stdout.fileno()).replace('/', '_')
       except OSError:
         ttyname = os.ttyname(sys.stdin.fileno()).replace('/', '_')
 
