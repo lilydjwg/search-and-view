@@ -2,14 +2,13 @@ Tools to make searching and viewing easy.
 
 For a Chinese introduction, see `my blog article`_.
 
-阅读中文版介绍，请移步\ `我的博客文章`_\ 。
+阅读中文版介绍，请看\ `我的博客文章`_\ （有点旧了）。
 
 Overview
 --------
 
 * ``agg``/``rgg``/``agv``: `ag`_ / `ripgrep`_ wrappers to make it easy to open files as matching places
-* ``vv``: A gVim wrapper to open files in existing gVim instances and then move
-  the cursor to specified location
+* ``vv``: A gVim wrapper to open files in existing gVim instances and then move the cursor to specified location
 
 Dependencies
 ------------
@@ -17,7 +16,7 @@ Dependencies
 * ``agg``: Bash, `ag`_, and several other common command-line tools.
 * ``rgg``: Bash, `ripgrep`_, and several other common command-line tools.
 * ``agv``: Python 3, `setproctitle`_ library for changing the process name (optional).
-* ``vv``: Python 3, the `zenity`_ utility, Vim or gVim with ``+clientserver`` feature.
+* ``vv``: Python 3, Vim or gVim with ``+clientserver`` feature.
 
 Arch Linux users can install ``search-and-view-git`` from AUR (thanks to @acgtyrant).
 
@@ -76,6 +75,8 @@ Then you can just select the line and do::
 You can pass the ``--wait`` flag to wait for Vim to finish editing the file
 (useful for programs that waits for editing to finish).
 
+Use the ``--vim NAME`` option to spefify a Vim instance (default is the first one found).
+
 License
 -------
 
@@ -83,7 +84,6 @@ GPLv3+.
 
 .. _ag: https://github.com/ggreer/the_silver_searcher
 .. _ripgrep: https://github.com/BurntSushi/ripgrep
-.. _setproctitle: http://code.google.com/p/py-setproctitle/
-.. _zenity: https://help.gnome.org/users/zenity/stable/
+.. _setproctitle: https://github.com/dvarrazzo/py-setproctitle
 .. _my blog article:
-.. _我的博客文章: http://blog.lilydjwg.me/2014/7/18/search-and-view-quickly.53141.html
+.. _我的博客文章: https://blog.lilydjwg.me/2014/7/18/search-and-view-quickly.53141.html
