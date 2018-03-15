@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ttyname=$(tty | tr '/' '_')
+ttyname=$(readlink /dev/fd/2 | tr '/' '_')
 base=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}/$UID}
 [[ ! -d $base ]] && mkdir -p "$base"
 logfile="$base/.agg.log.$ttyname"
