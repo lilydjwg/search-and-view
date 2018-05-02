@@ -1,0 +1,19 @@
+#!/bin/bash -e
+
+prefix="$HOME/.local/bin"
+if [[ -n "$1" ]]; then
+  prefix="$1"
+fi
+
+mkdir -p "$prefix"
+
+my-install() {
+  local dst="$prefix/$2/$1"
+  install -Dm755 "$1" "$dst"
+  echo "Installed $dst"
+}
+
+my-install agg
+my-install agv
+my-install rgg
+my-install vv
