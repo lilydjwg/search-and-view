@@ -10,6 +10,8 @@ Overview
 * ``rgg``/``rgv``: `ripgrep`_ wrappers to make it easy to open files as matching places
 * ``vv``: A Vim / gVim wrapper to open files in existing gVim instances and then move the cursor to specified location
 
+.. image:: https://raw.githubusercontent.com/lilydjwg/search-and-view/master/screenshot.png
+
 Dependencies
 ------------
 
