@@ -33,12 +33,23 @@ def get_editor():
   return editor
 
 if 'XDG_RUNTIME_DIR' in os.environ:
-  logfile_base = '%s/.agg.log' % os.environ['XDG_RUNTIME_DIR']
+  logfile_base = '%s/.rgg.log' % os.environ['XDG_RUNTIME_DIR']
 else:
-  logfile_base = '/%s/%d/.agg.log' % (
+  logfile_base = '/%s/%d/.rgg.log' % (
     os.environ.get('TMPDIR', '/tmp'), os.getuid())
 
 DISPLAY_TYPES = ['context', 'match']
+
+def get_logfile_by_tty() -> str:
+  try:
+    ttyname = os.ttyname(sys.stderr.fileno()).replace('/', '_')
+  except OSError:
+    try:
+      ttyname = os.ttyname(sys.stdout.fileno()).replace('/', '_')
+    except OSError:
+      ttyname = os.ttyname(sys.stdin.fileno()).replace('/', '_')
+
+  return logfile_base + '.' + ttyname
 
 def get_logfile(index):
   '''
@@ -49,15 +60,7 @@ def get_logfile(index):
   files = None
 
   if index <= 0:
-    try:
-      ttyname = os.ttyname(sys.stderr.fileno()).replace('/', '_')
-    except OSError:
-      try:
-        ttyname = os.ttyname(sys.stdout.fileno()).replace('/', '_')
-      except OSError:
-        ttyname = os.ttyname(sys.stdin.fileno()).replace('/', '_')
-
-    try_file = logfile_base + '.' + ttyname
+    try_file = get_logfile_by_tty()
     if os.path.exists(try_file):
       if index == 0:
         return try_file
@@ -96,7 +99,7 @@ def search():
   cwd = os.environ.get('PWD', os.getcwd())
   display = Display(cwd)
 
-  logfile = get_logfile(0)
+  logfile = get_logfile_by_tty()
   searcher = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, text=True)
   with open(logfile, 'w') as f:
     print(cwd, file=f)
@@ -258,7 +261,7 @@ def edit(data):
     'col': col,
   })
   print('File: %(file)s, Line %(line)s, Col %(col)s.' % info)
-  cmd = editor.substitute(info)
+  cmd = get_editor().substitute(info)
   os.system(cmd)
 
 def edit_entry(n, logfile):
@@ -313,7 +316,7 @@ def view():
   except ImportError:
     pass
 
-  parser = argparse.ArgumentParser(description='view and go to agg results')
+  parser = argparse.ArgumentParser(description='view and go to rgg results')
   parser.add_argument('indices', metavar='N', type=int, nargs='*',
                       help='index of result entry to go to')
   parser.add_argument('-l', action='store_true', default=False,
@@ -328,13 +331,13 @@ def view():
   if args.list:
     logfiles = get_logfile(-1)
     if not logfiles:
-      sys.exit('no agg log files')
+      sys.exit('no rgg log files')
     list_logfiles(logfiles)
   else:
     try:
       logfile = get_logfile(args.file)
     except IndexError:
-      sys.exit('no agg log files')
+      sys.exit('no rgg log files')
     if args.indices:
       for index in args.indices:
         edit_entry(index, logfile)
