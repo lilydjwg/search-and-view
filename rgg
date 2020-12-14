@@ -286,7 +286,7 @@ def edit_entry(n, logfile):
 
 def cat(logfile: str) -> None:
   with open(logfile) as f:
-    basedir = f.readline()
+    basedir = f.readline()[:-1]
     f.readline() # args
     display = Display(basedir)
     for l in f:
