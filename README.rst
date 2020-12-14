@@ -7,16 +7,16 @@ For a Chinese introduction, see `my blog article`_.
 Overview
 --------
 
-* ``agg``/``rgg``/``agv``: `ag`_ / `ripgrep`_ wrappers to make it easy to open files as matching places
-* ``vv``: A gVim wrapper to open files in existing gVim instances and then move the cursor to specified location
+* ``rgg``/``rgv``: `ripgrep`_ wrappers to make it easy to open files as matching places
+* ``vv``: A Vim / gVim wrapper to open files in existing gVim instances and then move the cursor to specified location
 
 Dependencies
 ------------
 
-* ``agg``: Bash, `ag`_, and several other common command-line tools.
-* ``rgg``: Bash, `ripgrep`_, and several other common command-line tools.
-* ``agv``: Python 3, `setproctitle`_ library for changing the process name (optional).
-* ``vv``: Python 3, Vim or gVim with ``+clientserver`` feature.
+* Python >= 3.8
+* `ripgrep`_
+* the `setproctitle`_ Python library (optional)
+* ``vv`` requires Vim or gVim with ``+clientserver`` feature
 
 Arch Linux users can install ``search-and-view-git`` from AUR (thanks to @acgtyrant).
 
@@ -41,13 +41,16 @@ For example::
 Usage
 -----
 
-``agg`` / ``rgg`` and ``agv``
+``rgg`` and ``agv``
 ^^^^^^^^^^^^^^^^^^^
-Just use ``agg`` as ``ag`` to search text (Searching in filenames ``-g`` won't work).
-Use ``rgg`` if you want to use the `ripgrep`_ tool.
+Just use ``rgg`` as ``rg`` to search text (Searching in filenames ``-g`` won't work).
 
-Use ``agv N`` to open the result numbered ``N``. You can use ``agv`` without arguments 
+Use ``rgv N`` to open the result numbered ``N``. You can use ``rgv`` without arguments 
 to view the list again. The list is per terminal (tty).
+
+If your `terminal supports hyperlinks`_, you'll be able to click the
+highlighted match to jump to it, provided that ``vv.desktop`` is properly
+installed (i.e. copied to ``~/.local/share/applications``).
 
 ``vv``
 ^^^^^^
@@ -87,3 +90,4 @@ GPLv3+.
 .. _setproctitle: https://github.com/dvarrazzo/py-setproctitle
 .. _my blog article:
 .. _我的博客文章: https://blog.lilydjwg.me/2014/7/18/search-and-view-quickly.53141.html
+.. _terminal supports hyperlinks: https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda

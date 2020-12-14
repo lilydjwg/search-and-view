@@ -3,6 +3,7 @@
 import re
 import os
 from subprocess import check_call, check_output
+import urllib.parse
 
 filelines = (
   re.compile(
@@ -23,18 +24,24 @@ filelines = (
 TIMEOUT = 1
 
 def parse_lineno(f):
-  for r in filelines:
-    m = r.match(f)
-    if m:
-      d = m.groupdict()
-      if '://' not in d['file']:
-        file = os.path.abspath(d['file'])
-      line = d.get('line', None)
-      col = d.get('col', None)
-      break
-    file = f
+  if f.startswith('vv://'):
+    q = urllib.parse.parse_qs(f.split('?', 1)[1])
+    file = q['path'][0]
+    line = int(q['line'][0])
+    col = int(q['col'][0])
   else:
-    line = col = None
+    for r in filelines:
+      m = r.match(f)
+      if m:
+        d = m.groupdict()
+        if '://' not in d['file']:
+          file = os.path.abspath(d['file'])
+        line = d.get('line', None)
+        col = d.get('col', None)
+        break
+      file = f
+    else:
+      line = col = None
 
   if col is not None:
     cmd = '+call setpos(".", [0, %s, %s, 0])' % (line, col)

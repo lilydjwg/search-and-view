@@ -1,18 +1,345 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-ttyname=$(readlink /dev/fd/2 | tr '/' '_')
-base=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}/$UID}
-[[ ! -d $base ]] && mkdir -p "$base"
-logfile="$base/.agg.log.$ttyname"
-tmpfile="$base/.agg.tmp.$$"
+import os
+import sys
+import math
+import glob
+import subprocess
+import argparse
+from string import Template
+from collections import defaultdict
+import shlex
+import json
+import base64
+from urllib.parse import urlencode
+import signal
 
-pwd -L > "$tmpfile"
-echo "$@" >> "$tmpfile"
+# The AGV_EDITOR environmental variable
+# default: $EDITOR, then 'vi'
+# suggested:
+#   AGV_EDITOR='vv $file:$line:$col'
+#   AGV_EDITOR='vim +$line $file'
+# escape: '$$' (but shell may recognize it!)
+# unknown -> ''
+editor = os.environ.get('AGV_EDITOR', os.environ.get('EDITOR', 'vi'))
+if editor in ('vi', 'vim'):
+  editor += ' +$line'
+if '$file' not in editor:
+  editor += ' $file'
+editor = Template(editor)
 
-rg --colors match:fg:9 --colors match:style:nobold -g '!.git' --hidden --vimgrep --color always "$@" | tr -d '\017' | cat -n | tee -ai "$tmpfile" | ${PAGER:-less -FRXM}
+if 'XDG_RUNTIME_DIR' in os.environ:
+  logfile_base = '%s/.agg.log' % os.environ['XDG_RUNTIME_DIR']
+else:
+  logfile_base = '/%s/%d/.agg.log' % (
+    os.environ.get('TMPDIR', '/tmp'), os.getuid())
 
-if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
-  mv "$tmpfile" "$logfile"
-else
-  exit "${PIPESTATUS[0]}"
-fi
+DISPLAY_TYPES = ['context', 'match']
+
+def get_logfile(index):
+  '''
+  index == 0: try to choose one depending on ttyname
+  index > 0: file index after sorting
+  index < 0:  return all files
+  '''
+  files = None
+
+  if index <= 0:
+    try:
+      ttyname = os.ttyname(sys.stderr.fileno()).replace('/', '_')
+    except OSError:
+      try:
+        ttyname = os.ttyname(sys.stdout.fileno()).replace('/', '_')
+      except OSError:
+        ttyname = os.ttyname(sys.stdin.fileno()).replace('/', '_')
+
+    try_file = logfile_base + '.' + ttyname
+    if os.path.exists(try_file):
+      if index == 0:
+        return try_file
+      else:
+        files = [try_file]
+
+  if files:
+    files += [x for x in glob.glob(logfile_base + '*') if x != files[0]]
+  else:
+    files = glob.glob(logfile_base + '*')
+  files.sort(reverse=True, key=lambda f: os.stat(f).st_mtime)
+  if index > 0:
+    return files[index-1]
+  elif index == 0:
+    return files[0]
+  else:
+    return files
+
+def search():
+  try:
+    import setproctitle
+    setproctitle.setproctitle('rgg')
+  except ImportError:
+    pass
+
+  cmd = ['rg', '--hidden', '-g', '!.git', '--json'] + sys.argv[1:]
+
+  import ctypes
+  try:
+    ctypes.CDLL('libopen_noatime.so')
+    env = os.environ.copy()
+    env['LD_PRELOAD'] = 'libopen_noatime.so'
+  except OSError:
+    env = None
+
+  cwd = os.environ.get('PWD', os.getcwd())
+  display = Display(cwd)
+
+  logfile = get_logfile(0)
+  searcher = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, text=True)
+  with open(logfile, 'w') as f:
+    print(cwd, file=f)
+    print(subprocess.list2cmdline(sys.argv[1:]), file=f)
+    for line in searcher.stdout:
+      f.write(line)
+      display.feed(line)
+
+def decode(data) -> str:
+  try:
+    s = data['text']
+  except KeyError:
+    s = base64.b64decode(data['bytes']).decode(errors='replace')
+  return s
+
+def chomp(s: str) -> str:
+  if s.endswith('\n'):
+    return s[:-1]
+  else:
+    return s
+
+def colored(s: str, c: int) -> str:
+  return f'\x1b[38;5;{c}m{s}\x1b[0m'
+
+def linked(s: str, abspath: str, line: int, col: int) -> str:
+  url = 'vv://?' + urlencode({
+    'path': abspath,
+    'line': line,
+    'col': col,
+  })
+  return f'\x1b]8;;{url}\x1b\\{s}\x1b]8;;\x1b\\'
+
+class Display:
+  def __init__(self, basepath: str) -> None:
+    isatty = sys.stdout.isatty()
+    if isatty:
+      if pager := os.environ.get('PAGER'):
+        pager_cmd = shlex.split(pager)
+      else:
+        pager_cmd = ['less', '-rFXM']
+      self.pager = subprocess.Popen(pager_cmd, stdin=subprocess.PIPE, text=True)
+      output = self.pager.stdin
+      # less handles it, we wait less
+      signal.signal(signal.SIGINT, signal.SIG_IGN)
+    else:
+      self.pager = None
+      output = sys.stdout
+
+    self.output = output
+    self.counter = 0
+    self.broken = False
+    self.basepath = basepath
+    if isatty:
+      self.printer = self.nice_printer
+    else:
+      self.printer = self.plain_printer
+
+  def __del__(self) -> None:
+    if self.pager:
+      self.pager.stdin.close()
+      self.pager.wait()
+
+  def feed(self, line: str) -> bool:
+    if self.broken:
+      return False
+
+    j = json.loads(line)
+    try:
+      self.printer(j)
+      return True
+    except BrokenPipeError:
+      self.broken = True
+      return False
+
+  def nice_printer(self, j) -> None:
+    type = j['type']
+
+    if type not in DISPLAY_TYPES:
+      return
+
+    if type == 'context':
+      sep = '-'
+    else:
+      sep = ':'
+
+    self.counter += 1
+    print(f'{self.counter:5} ', end='', file=self.output)
+
+    data = j['data']
+    path = decode(data['path'])
+    abspath = os.path.join(self.basepath, path)
+    path = colored(path, 5)
+    text = chomp(decode(data['lines']))
+    line_number = colored(data['line_number'], 2)
+
+    if ms := data['submatches']:
+      column = colored(ms[0]['start'] + 1, 2)
+
+      colored_text = []
+      try:
+        textb = data['lines']['text'].encode('utf-8')
+      except KeyError:
+        textb = base64.b64decode(data['lines']['bytes'])
+      last = 0
+      for m in ms:
+        start = m['start']
+        end = m['end']
+        colored_text.append(textb[last:start])
+        colored_text.append(
+          colored(
+            linked(
+              textb[start:end].decode(errors='replace'),
+              abspath, data['line_number'], start + 1),
+            9,
+          ).encode())
+        last = end
+      colored_text.append(textb[end:])
+      text = b''.join(colored_text).decode(errors='replace')
+
+      print(path, line_number, column, chomp(text), sep=sep, file=self.output)
+    else:
+      print(path, line_number, text, sep=sep, file=self.output)
+
+  def plain_printer(self, j) -> None:
+    type = j['type']
+
+    if type not in DISPLAY_TYPES:
+      return
+
+    if type == 'context':
+      sep = '-'
+    else:
+      sep = ':'
+
+    self.counter += 1
+    print(f'{self.counter:5} ', end='', file=self.output)
+
+    data = j['data']
+    path = decode(data['path'])
+    text = chomp(decode(data['lines']))
+    if ms := data['submatches']:
+      column = ms[0]['start'] + 1
+      print(path, data['line_number'], column, text, sep=sep, file=self.output)
+    else:
+      print(path, data['line_number'], text, sep=sep, file=self.output)
+
+def edit(data):
+  path = decode(data['path'])
+  line = data['line_number']
+  if ms := data['submatches']:
+    col = ms[0]['start'] + 1
+  else:
+    col = 1
+
+  info = defaultdict(str)
+  info.update({
+    'file': path,
+    'line': line,
+    'col': col,
+  })
+  print('File: %(file)s, Line %(line)s, Col %(col)s.' % info)
+  cmd = editor.substitute(info)
+  os.system(cmd)
+
+def edit_entry(n, logfile):
+  try:
+    with open(logfile, encoding='utf-8') as f:
+      os.chdir(f.readline()[:-1])
+      f.readline() # args
+      i = 0
+      for l in f:
+        j = json.loads(l)
+        if j['type'] not in DISPLAY_TYPES:
+          continue
+        i += 1
+        if i == n:
+          edit(j['data'])
+          break
+      else:
+        sys.exit('out of index.')
+  except IOError as e:
+    print('Error opening logfile %s: %s' % (logfile, e), file=sys.stderr)
+    sys.exit(2)
+
+def cat(logfile: str) -> None:
+  with open(logfile) as f:
+    basedir = f.readline()
+    f.readline() # args
+    display = Display(basedir)
+    for l in f:
+      if not display.feed(l):
+        return
+
+def list_logfiles(logfiles):
+  args = []
+  dirs = []
+  for log in logfiles:
+    with open(log, errors='replace') as f:
+      dirs.append(f.readline()[:-1])
+      args.append(f.readline()[:-1])
+
+  fmt = '%%%dd: %%-%ds (dir: %%s)' % (
+    math.ceil(math.log10(len(logfiles))),
+    min(max(len(x) for x in args), 40),
+  )
+
+  for i in range(len(args)):
+    print(fmt % (i+1, args[i], dirs[i]))
+
+def view():
+  try:
+    import setproctitle
+    setproctitle.setproctitle('agv')
+  except ImportError:
+    pass
+
+  parser = argparse.ArgumentParser(description='view and go to agg results')
+  parser.add_argument('indices', metavar='N', type=int, nargs='*',
+                      help='index of result entry to go to')
+  parser.add_argument('-l', action='store_true', default=False,
+                      help='list results (same without args)')
+  parser.add_argument('-L', '--list', action='store_true', default=False,
+                      help='list all log files')
+  parser.add_argument('-f', '--file', type=int, default=0, metavar='NUMBER',
+                      help='explicitly select a log file')
+
+  args = parser.parse_args()
+
+  if args.list:
+    logfiles = get_logfile(-1)
+    if not logfiles:
+      sys.exit('no agg log files')
+    list_logfiles(logfiles)
+  else:
+    try:
+      logfile = get_logfile(args.file)
+    except IndexError:
+      sys.exit('no agg log files')
+    if args.indices:
+      for index in args.indices:
+        edit_entry(index, logfile)
+    else:
+      cat(logfile)
+
+if __name__ == '__main__':
+  progname = os.path.basename(sys.argv[0])
+  if progname == 'agv':
+    view()
+  else:
+    search()
