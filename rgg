@@ -14,19 +14,23 @@ import base64
 from urllib.parse import urlencode
 import signal
 
-# The AGV_EDITOR environmental variable
+# The RGV_EDITOR environmental variable
 # default: $EDITOR, then 'vi'
 # suggested:
-#   AGV_EDITOR='vv $file:$line:$col'
-#   AGV_EDITOR='vim +$line $file'
+#   RGV_EDITOR='vv $file:$line:$col'
+#   RGV_EDITOR='vim +$line $file'
 # escape: '$$' (but shell may recognize it!)
 # unknown -> ''
-editor = os.environ.get('AGV_EDITOR', os.environ.get('EDITOR', 'vi'))
-if editor in ('vi', 'vim'):
-  editor += ' +$line'
-if '$file' not in editor:
-  editor += ' $file'
-editor = Template(editor)
+def get_editor():
+  editor = os.environ.get('RGV_EDITOR')
+  if not editor:
+    editor = os.environ.get('AGV_EDITOR', os.environ.get('EDITOR', 'vi'))
+  if editor in ('vi', 'vim'):
+    editor += ' +$line'
+  if '$file' not in editor:
+    editor += ' $file'
+  editor = Template(editor)
+  return editor
 
 if 'XDG_RUNTIME_DIR' in os.environ:
   logfile_base = '%s/.agg.log' % os.environ['XDG_RUNTIME_DIR']
@@ -305,7 +309,7 @@ def list_logfiles(logfiles):
 def view():
   try:
     import setproctitle
-    setproctitle.setproctitle('agv')
+    setproctitle.setproctitle('rgv')
   except ImportError:
     pass
 
@@ -339,7 +343,7 @@ def view():
 
 if __name__ == '__main__':
   progname = os.path.basename(sys.argv[0])
-  if progname == 'agv':
+  if progname in ['rgv', 'agv']:
     view()
   else:
     search()

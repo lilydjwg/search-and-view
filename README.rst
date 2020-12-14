@@ -23,8 +23,8 @@ Arch Linux users can install ``search-and-view-git`` from AUR (thanks to @acgtyr
 Configuration
 -------------
 
-Use the ``AGV_EDITOR`` environmental variable to spefify your preferred editor
-for ``agv``. It's taken as a shell command template string and the following is
+Use the ``RGV_EDITOR`` environmental variable to spefify your preferred editor
+for ``rgv``. It's taken as a shell command template string and the following is
 recognized:
 
 * ``$file``: The file path.
@@ -34,14 +34,14 @@ recognized:
 For example::
 
   # uses 'vv'
-  export AGV_EDITOR='vv $file:$line:$col'
+  export RGV_EDITOR='vv $file:$line:$col'
   # uses 'vim'
-  export AGV_EDITOR='vim +$line $file'
+  export RGV_EDITOR='vim +$line $file'
 
 Usage
 -----
 
-``rgg`` and ``agv``
+``rgg`` and ``rgv``
 ^^^^^^^^^^^^^^^^^^^
 Just use ``rgg`` as ``rg`` to search text (Searching in filenames ``-g`` won't work).
 
