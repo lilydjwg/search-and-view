@@ -13,7 +13,8 @@ my-install() {
   echo "Installed $dst"
 }
 
-my-install agg
-my-install agv
 my-install rgg
+my-install rgv
 my-install vv
+install -Dm644 vv.desktop ~/.local/share/applications/vv.desktop
+update-desktop-database ~/.local/share/applications
