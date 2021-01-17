@@ -96,11 +96,16 @@ def search():
   except OSError:
     env = None
 
-  cwd = os.environ.get('PWD', os.getcwd())
-  display = Display(cwd)
-
   logfile = get_logfile_by_tty()
   searcher = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, text=True)
+
+  cwd = os.environ.get('PWD', os.getcwd())
+  isatty = sys.stdout.isatty()
+  display = Display(cwd, isatty)
+  if isatty:
+    # less handles it, we wait less
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
   with open(logfile, 'w') as f:
     print(cwd, file=f)
     print(subprocess.list2cmdline(sys.argv[1:]), file=f)
@@ -133,8 +138,7 @@ def linked(s: str, abspath: str, line: int, col: int) -> str:
   return f'\x1b]8;;{url}\x1b\\{s}\x1b]8;;\x1b\\'
 
 class Display:
-  def __init__(self, basepath: str) -> None:
-    isatty = sys.stdout.isatty()
+  def __init__(self, basepath: str, isatty: bool) -> None:
     if isatty:
       if pager := os.environ.get('PAGER'):
         pager_cmd = shlex.split(pager)
@@ -142,8 +146,6 @@ class Display:
         pager_cmd = ['less', '-rFXM']
       self.pager = subprocess.Popen(pager_cmd, stdin=subprocess.PIPE, text=True)
       output = self.pager.stdin
-      # less handles it, we wait less
-      signal.signal(signal.SIGINT, signal.SIG_IGN)
     else:
       self.pager = None
       output = sys.stdout
