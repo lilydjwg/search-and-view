@@ -293,7 +293,8 @@ def cat(logfile: str) -> None:
   with open(logfile) as f:
     basedir = f.readline()[:-1]
     f.readline() # args
-    display = Display(basedir)
+    isatty = sys.stdout.isatty()
+    display = Display(basedir, isatty)
     for l in f:
       if not display.feed(l):
         return
