@@ -138,7 +138,7 @@ def linked(s: str, abspath: str, line: int, col: int) -> str:
   return f'\x1b]8;;{url}\x1b\\{s}\x1b]8;;\x1b\\'
 
 class Display:
-  def __init__(self, basepath: str, isatty: bool) -> None:
+  def __init__(self, basepath: str, isatty: bool = False) -> None:
     if isatty:
       if pager := os.environ.get('PAGER'):
         pager_cmd = shlex.split(pager)
