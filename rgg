@@ -35,8 +35,11 @@ def get_editor():
 if 'XDG_RUNTIME_DIR' in os.environ:
   logfile_base = '%s/.rgg.log' % os.environ['XDG_RUNTIME_DIR']
 else:
-  logfile_base = '/%s/%d/.rgg.log' % (
+  logfile_dir = '/%s/%d' % (
     os.environ.get('TMPDIR', '/tmp'), os.getuid())
+  if not os.path.isdir(logfile_dir):
+    os.mkdir(logfile_dir)
+  logfile_base = logfile_dir + '/.rgg.log'
 
 DISPLAY_TYPES = ['context', 'match']
 
