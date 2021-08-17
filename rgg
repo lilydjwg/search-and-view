@@ -116,6 +116,9 @@ def search():
       f.write(line)
       display.feed(line)
 
+  searcher.wait()
+  sys.exit(searcher.returncode)
+
 def decode(data) -> str:
   try:
     s = data['text']
