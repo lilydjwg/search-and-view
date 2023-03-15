@@ -149,7 +149,7 @@ class Display:
       if pager := os.environ.get('PAGER'):
         pager_cmd = shlex.split(pager)
       else:
-        pager_cmd = ['less', '-rFXM']
+        pager_cmd = ['less', '-RFXM']
       self.pager = subprocess.Popen(pager_cmd, stdin=subprocess.PIPE, text=True)
       output = self.pager.stdin
     else:
