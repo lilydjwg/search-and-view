@@ -60,7 +60,7 @@ def main(files, wait_for_vim, vim_name):
       pass
 
   vims = [x.lower() for x in
-            check_output(['vim', '--serverlist']).decode().splitlines()
+            check_output(['vim', '--clientserver', 'socket', '--serverlist']).decode().splitlines()
           if x]
   vim_name = vim_name.lower()
 
@@ -82,7 +82,7 @@ def main(files, wait_for_vim, vim_name):
     check_call(cmd)
     return
 
-  cmd = ['vim', '--servername', vim]
+  cmd = ['vim', '--clientserver', 'socket', '--servername', vim]
   if wait_for_vim:
     cmd.append('--remote-tab-wait-silent')
   else:
