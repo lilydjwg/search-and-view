@@ -91,16 +91,8 @@ def search():
 
   cmd = ['rg', '--hidden', '-g', '!.git', '--json'] + sys.argv[1:]
 
-  import ctypes
-  try:
-    ctypes.CDLL('libopen_noatime.so')
-    env = os.environ.copy()
-    env['LD_PRELOAD'] = 'libopen_noatime.so'
-  except OSError:
-    env = None
-
   logfile = get_logfile_by_tty()
-  searcher = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, text=True)
+  searcher = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
 
   cwd = os.environ.get('PWD', os.getcwd())
   isatty = sys.stdout.isatty()
