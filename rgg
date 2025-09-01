@@ -101,12 +101,24 @@ def search():
     # less handles it, we wait less
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
+  not_json = False
   with open(logfile, 'w') as f:
     print(cwd, file=f)
     print(subprocess.list2cmdline(sys.argv[1:]), file=f)
     for line in searcher.stdout:
       f.write(line)
-      display.feed(line)
+      try:
+        display.feed(line)
+      except json.JSONDecodeError:
+        display.write(line)
+        not_json = True
+        break
+
+  if not_json:
+    # not json output, --help or similar, pass through output
+    os.unlink(logfile)
+    for line in searcher.stdout:
+      display.write(line)
 
   searcher.wait()
   sys.exit(searcher.returncode)
@@ -248,6 +260,9 @@ class Display:
       print(path, data['line_number'], column, text, sep=sep, file=self.output)
     else:
       print(path, data['line_number'], text, sep=sep, file=self.output)
+
+  def write(self, data) -> None:
+    self.output.write(data)
 
 def edit(data):
   path = decode(data['path'])
