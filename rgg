@@ -32,7 +32,9 @@ def get_editor():
   editor = Template(editor)
   return editor
 
-if 'XDG_RUNTIME_DIR' in os.environ:
+if os.name == 'nt':
+  logfile_base = '%s/.rgg.log' % os.environ['TEMP']
+elif 'XDG_RUNTIME_DIR' in os.environ:
   logfile_base = '%s/.rgg.log' % os.environ['XDG_RUNTIME_DIR']
 else:
   logfile_dir = '/%s/%d' % (
@@ -44,6 +46,8 @@ else:
 DISPLAY_TYPES = ['context', 'match']
 
 def get_logfile_by_tty() -> str:
+  if os.name == 'nt':
+    return logfile_base + '.' + 'windows'
   try:
     ttyname = os.ttyname(sys.stderr.fileno()).replace('/', '_')
   except OSError:
